@@ -1,8 +1,12 @@
 # Shadster's Avatar Tools [Download](https://github.com/Shadsterwolf/ShadsterAvatarTools/releases)
 Shadsterwolf's avatar tools, mostly used for personal use and subject to change. <br />
 <b>Intended for Unity Editor to support VRChat Avatar models</b>
-- Most Buttons will be hard changes done to your avatar, use at your own risk!!!
+- Most button functions will be hard changes done to your avatar and files, use at your own risk!!!
 - Theres still missing debug/message feedback, but once the button is pressed the code executes. If the console shows no errors, it probably worked.
+
+<p align="center"> 
+<img src="https://github.com/Shadsterwolf/ShadstersAvatarTools/blob/master/Preview1_2_0.png?raw=true">
+</p>
 
 # Instructions
 1. With a project open with VRCSDK (from VRChat Content Creator)
