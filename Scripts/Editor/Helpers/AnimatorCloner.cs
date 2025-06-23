@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Mono.Cecil;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -19,9 +20,21 @@ namespace Shadster.AvatarTools.VRLabs.AV3Manager //COPIED FROM VRLABS AV3MANAGER
         private static Dictionary<string, string> _parametersNewName;
         private static string _assetPath;
 
+
+        public static void CopyControllersLayers(AnimatorController source, AnimatorController dest)
+        {
+            for (int i = 0; i < source.layers.Length; i++)
+            {
+                CopyControllerLayer(source, i, dest);
+            }
+
+            EditorUtility.SetDirty(dest);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
         public static void CopyControllerLayer(AnimatorController source, int sourceLayerIndex, AnimatorController dest)
         {
-            _assetPath = AssetDatabase.GetAssetPath(source);
+            _assetPath = AssetDatabase.GetAssetPath(dest); //If asset path is source, we create this fake dependancy to another controller... which causes major glitches
             _parametersNewName = new Dictionary<string, string>();
 
             AnimatorControllerLayer[] sourceLayers = source.layers;
@@ -37,7 +50,6 @@ namespace Shadster.AvatarTools.VRLabs.AV3Manager //COPIED FROM VRLABS AV3MANAGER
             DeleteExistingControllerLayer(dest, newL.name);
             newL.stateMachine.name = newL.name;
             dest.AddLayer(newL);
-
 
             EditorUtility.SetDirty(dest);
             AssetDatabase.SaveAssets();
@@ -55,6 +67,8 @@ namespace Shadster.AvatarTools.VRLabs.AV3Manager //COPIED FROM VRLABS AV3MANAGER
                 }
             }
         }
+
+        
 
         public static AnimatorController MergeControllers(AnimatorController mainController, AnimatorController controllerToMerge, Dictionary<string, string> paramNameSwap = null, bool saveToNew = false)
         {

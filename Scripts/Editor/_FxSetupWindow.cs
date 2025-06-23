@@ -17,9 +17,9 @@ using static Shadster.AvatarTools.AnimatorControl;
 namespace Shadster.AvatarTools.FxSetup
 {
     [System.Serializable]
-    public class _FxSetupWindow : EditorWindow
+    public class _FxMergeWindow : EditorWindow
     {
-        [SerializeField, HideInInspector] static _FxSetupWindow _tools;
+        [SerializeField, HideInInspector] static _FxMergeWindow _tools;
 
         static EditorWindow toolWindow;
         Vector2 scrollPos;
@@ -36,12 +36,12 @@ namespace Shadster.AvatarTools.FxSetup
         private bool[] _showShapekeys;
         private int[] _selectedKeys;
 
-        public static _FxSetupWindow ToolsWindow
+        public static _FxMergeWindow ToolsWindow
         {
             get
             {
                 if (!_tools)
-                    _tools = FindObjectOfType(typeof(_FxSetupWindow)) as _FxSetupWindow ?? CreateInstance<_FxSetupWindow>();
+                    _tools = FindObjectOfType(typeof(_FxMergeWindow)) as _FxMergeWindow ?? CreateInstance<_FxMergeWindow>();
                 return _tools;
             }
 
@@ -55,7 +55,7 @@ namespace Shadster.AvatarTools.FxSetup
         {
             if (!toolWindow)
             {
-                toolWindow = EditorWindow.GetWindow<_FxSetupWindow>();
+                toolWindow = EditorWindow.GetWindow<_FxMergeWindow>();
                 toolWindow.autoRepaintOnSceneChange = true;
                 toolWindow.titleContent = new GUIContent("FX Setup");
                 toolWindow.minSize = new Vector2(500, 200);
@@ -302,10 +302,10 @@ namespace Shadster.AvatarTools.FxSetup
             
             if (vrcAvatar != null && vrcFx != null)
             {
-                if (GUILayout.Button("BackUp Current FX Controller", GUILayout.Height(24)))
-                {
-                    BackupController(vrcFx);
-                }
+                //if (GUILayout.Button("BackUp Current FX Controller", GUILayout.Height(24)))
+                //{
+                //    BackupController(vrcFx);
+                //}
                 if (vrcFx.layers.Length > 0)
                 {
                     DrawFxLayers();

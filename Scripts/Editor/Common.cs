@@ -72,5 +72,42 @@ namespace Shadster.AvatarTools
 
         }
 
+        public static void FixMissingSFXPrefab(GameObject vrcAvatar)
+        {
+            string prefabPath = "Assets/!Wholesome/SPS Configurator/2.0.11/SFX/SFX.prefab";
+            GameObject replacementPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+            if (replacementPrefab == null)
+            {
+                Debug.LogError("Replacement prefab not found at path: " + prefabPath);
+                return;
+            }
+
+            int replacedCount = 0;
+            Transform[] allTransforms = vrcAvatar.GetComponentsInChildren<Transform>(true);
+
+            for (int i = allTransforms.Length - 1; i >= 0; i--)
+            {
+                Transform t = allTransforms[i];
+                if (t != null && t.name.StartsWith("SFX"))
+                {
+                    Transform parent = t.parent;
+                    int siblingIndex = t.GetSiblingIndex();
+
+                    Undo.DestroyObjectImmediate(t.gameObject);
+                    GameObject newInstance = (GameObject)PrefabUtility.InstantiatePrefab(replacementPrefab, parent);
+                    newInstance.transform.SetSiblingIndex(siblingIndex);
+                    Undo.RegisterCreatedObjectUndo(newInstance, "Replace SFX Prefab");
+
+                    replacedCount++;
+                }
+            }
+
+            Debug.Log(replacedCount == 0 ? "No 'SFX' objects found." : $"Replaced {replacedCount} 'SFX' objects.");
+        }
+
+
+
+
     }
 }

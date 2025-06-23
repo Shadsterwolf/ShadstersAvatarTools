@@ -1,4 +1,4 @@
-﻿//Made by Shadsterwolf, some code inspired by the VRCSDK, Av3Creator, and PumpkinTools
+﻿ //Made by Shadsterwolf, some code inspired by the VRCSDK, Av3Creator, and PumpkinTools
 using Shadster.AvatarTools;
 using System;
 using System.Collections.Generic;
@@ -38,7 +38,7 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
         private bool useExperimentalPlayMode;
         private bool ignorePhysImmobile;
         private bool testPhysbones;
-        private string toolVersion = "1.1.0";
+        private string toolVersion = "1.2.0";
 
         [SerializeReference] private VRCAvatarDescriptor vrcAvatarDescriptor;
         [SerializeReference] private GameObject vrcAvatar;
@@ -65,6 +65,7 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
         [SerializeReference] private bool materialFoldView;
         [SerializeReference] private bool texturesFoldView;
         [SerializeReference] private bool scenesFoldView;
+        [SerializeReference] private bool subScenesFoldView;
         [SerializeReference] private bool gogoFoldView;
 
         [SerializeReference] private Transform breastBoneL;
@@ -256,14 +257,151 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
                     {
                         ClearAvatarBlueprintID(vrcAvatar);
                     }
-                    //if (GUILayout.Button("Save Avatar Prefab", GUILayout.Height(24)))
-                    //{
-                    //    ShadstersAvatarTools.SaveAvatarPrefab(vrcAvatar);
-                    //}
+                    if (GUILayout.Button("Fix Missing Wholesome SFX prefab", GUILayout.Height(24)))
+                    {
+                        FixMissingSFXPrefab(vrcAvatar);
+                    }
+                }
+                EditorGUILayout.EndVertical();
+            }
+        } //End Common Foldout
+
+        public void DrawTexturesWindow()
+        {
+            using (new EditorGUILayout.VerticalScope())
+            {
+                Rect subBoxRect = EditorGUILayout.BeginVertical();
+                subBoxRect.x += 4;
+                subBoxRect.width -= 4;
+                subBoxRect.height += 2;
+                Color currentColor = GUI.color;
+                GUI.color = new Color(1f, 0.4f, 0.4f);
+                GUI.Box(subBoxRect, "");
+
+                GUI.color = currentColor;
+                texturesFoldView = EditorGUILayout.Foldout(texturesFoldView, "Textures");
+                if (texturesFoldView)
+                {
+
+                    Color currentBackgroundColor = GUI.backgroundColor;
+                    GUI.backgroundColor = new Color(1.6f, 0.6f, 0.6f);
+
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button("Enable All Mip Maps", GUILayout.Height(24)))
+                        {
+                            UpdateAvatarTextureMipMaps(vrcAvatar, true);
+                        }
+                        if (GUILayout.Button("Disable All Mip Maps", GUILayout.Height(24)))
+                        {
+                            if (Prompt("Disabling All Mip Maps is useful only if your avatar has texture seam issues! \n This will force others to render your avatar at full vram despite being far away..."))
+                            {
+                                UpdateAvatarTextureMipMaps(vrcAvatar, false);
+                            }
+                        }
+                    }
+                    using (var horizontalScope = new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button("Set All 256px", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesMaxSize(vrcAvatar, 256);
+                        }
+                        if (GUILayout.Button("Set All 512px", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesMaxSize(vrcAvatar, 512);
+                        }
+                        if (GUILayout.Button("Set All 1k", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesMaxSize(vrcAvatar, 1024);
+                        }
+                        if (GUILayout.Button("Set All 2k", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesMaxSize(vrcAvatar, 2048);
+                        }
+                        if (GUILayout.Button("Set All 4k", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesMaxSize(vrcAvatar, 4096);
+                        }
+                    }
+
+                    using (var horizontalScope = new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button("Set Compression LQ", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesCompression(vrcAvatar, TextureImporterCompression.CompressedLQ);
+                        }
+                        if (GUILayout.Button("Set Compression NQ", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesCompression(vrcAvatar, TextureImporterCompression.Compressed);
+                        }
+                        if (GUILayout.Button("Set Compression HQ", GUILayout.Height(24)))
+                        {
+                            SetAvatarTexturesCompression(vrcAvatar, TextureImporterCompression.CompressedHQ);
+                        }
+
+                    }
+                    GUI.backgroundColor = currentBackgroundColor;
                 }
                 EditorGUILayout.EndVertical();
             }
         }
+
+        public void DrawMaterialFoldout()
+        {
+            using (new EditorGUILayout.VerticalScope())
+            {
+                Rect subBoxRect = EditorGUILayout.BeginVertical();
+                subBoxRect.x += 4;
+                subBoxRect.width -= 4;
+                subBoxRect.height += 2;
+                Color currentColor = GUI.color;
+                GUI.color = new Color(0f, 1.5f, 1.5f);
+                GUI.Box(subBoxRect, "");
+
+                GUI.color = currentColor;
+                materialFoldView = EditorGUILayout.Foldout(materialFoldView, "Material");
+                if (materialFoldView)
+                {
+                    Color currentBackgroundColor = GUI.backgroundColor;
+                    GUI.backgroundColor = new Color(0f, 1.8f, 1.8f);
+                    List<Material> materials = new List<Material>();
+                    materials = GetUniqueMaterials(vrcAvatar).ToList();
+
+
+                    if (GUILayout.Button("Convert PC Materials to Quest Toon Standard", GUILayout.Height(24)))
+                    {
+                        CreateAvatarMaterialsToQuestToon(vrcAvatar);
+                        //GenerateAnimationLightingModes(vrcAvatar);
+                        //GenerateAnimationLightingDirection(vrcAvatar);
+                        //GenerateAnimationShadingCutoff(vrcAvatar);
+                        //GeneratePoiRimLightCutoff(vrcAvatar);
+                        //GeneratePoiMenus(vrcAvatarDescriptor);
+                    }
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button(new GUIContent("Update Avatar Quest Toon Lit to Toon Standard", "Update selected Avatar's shader ToonLit to Toon Standard"), GUILayout.Height(24)))
+                        {
+                            ConvertAvatarToonLitToToonStandard(vrcAvatar);
+                        }
+                        
+                        if (GUILayout.Button(new GUIContent("Update ALL Quest Toon Lit to Toon Standard", "Update ENTIRE UNITY PROJECT ToonLit to Toon Standard"), GUILayout.Height(24)))
+                        {
+                            if (Prompt("This will update the ENTIRE UNITY PROJECT that has \'ToonLit\' to \'ToonStandard\'! "))
+                            {
+                                ConvertAllToonLitToToonStandard();
+                            }
+                        }
+                    }
+                    //if (GUILayout.Button("Update Toon Standard", GUILayout.Height(24)))
+                    //{
+                    //    UpdateExistingToonStandard(vrcAvatar);
+                    //}
+                    GUI.backgroundColor = currentBackgroundColor;
+                }
+            }
+            EditorGUILayout.EndVertical();
+        }
+
         public void DrawBonesWindow()
         {
             using (new EditorGUILayout.VerticalScope())
@@ -366,6 +504,7 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
                     if (GUILayout.Button("Generate Animation Render Toggles", GUILayout.Height(24)))
                     {
                         GenerateAnimationRenderToggles(vrcAvatar);
+                        CombineOutfitShapekeys(vrcAvatar);
                     }
                     if (GUILayout.Button("Generate Animation Shapekeys", GUILayout.Height(24)))
                     {
@@ -407,86 +546,6 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
             }
         } //End Animation Foldout
 
-        public void DrawTexturesWindow()
-        {
-            using (new EditorGUILayout.VerticalScope())
-            {
-                Rect subBoxRect = EditorGUILayout.BeginVertical();
-                subBoxRect.x += 4;
-                subBoxRect.width -= 4;
-                subBoxRect.height += 2;
-                Color currentColor = GUI.color;
-                GUI.color = new Color(1f, 0.4f, 0.4f);
-                GUI.Box(subBoxRect, "");
-
-                GUI.color = currentColor;
-                texturesFoldView = EditorGUILayout.Foldout(texturesFoldView, "Textures");
-                if (texturesFoldView)
-                {
-
-                    Color currentBackgroundColor = GUI.backgroundColor;
-                    GUI.backgroundColor = new Color(1.6f, 0.6f, 0.6f);
-
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        if (GUILayout.Button("Enable All Mip Maps", GUILayout.Height(24)))
-                        {
-                            UpdateAvatarTextureMipMaps(vrcAvatar, true);
-                        }
-                        if (GUILayout.Button("Disable All Mip Maps", GUILayout.Height(24)))
-                        {
-                            if (Prompt("Disabling All Mip Maps is useful only if your avatar has texture seam issues! \n This will force others to render your avatar at full vram despite being far away..."))
-                            {
-                                UpdateAvatarTextureMipMaps(vrcAvatar, false);
-                            }
-                        }
-                    }
-                    using (var horizontalScope = new EditorGUILayout.HorizontalScope())
-                    {
-                        if (GUILayout.Button("Set All 256px", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesMaxSize(vrcAvatar, 256);
-                        }
-                        if (GUILayout.Button("Set All 512px", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesMaxSize(vrcAvatar, 512);
-                        }
-                        if (GUILayout.Button("Set All 1k", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesMaxSize(vrcAvatar, 1024);
-                        }
-                        if (GUILayout.Button("Set All 2k", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesMaxSize(vrcAvatar, 2048);
-                        }
-                        if (GUILayout.Button("Set All 4k", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesMaxSize(vrcAvatar, 4096);
-                        }
-                    }
-
-                    using (var horizontalScope = new EditorGUILayout.HorizontalScope())
-                    {
-                        if (GUILayout.Button("Set Compression LQ", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesCompression(vrcAvatar, TextureImporterCompression.CompressedLQ);
-                        }
-                        if (GUILayout.Button("Set Compression NQ", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesCompression(vrcAvatar, TextureImporterCompression.Compressed);
-                        }
-                        if (GUILayout.Button("Set Compression HQ", GUILayout.Height(24)))
-                        {
-                            SetAvatarTexturesCompression(vrcAvatar, TextureImporterCompression.CompressedHQ);
-                        }
-
-                    }
-                    GUI.backgroundColor = currentBackgroundColor;
-                }
-                EditorGUILayout.EndVertical();
-            }
-        }
-
         public void DrawGogoFoldout()
         {
             using (new EditorGUILayout.VerticalScope())
@@ -511,7 +570,7 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
                         GUILayout.Label("Beyond Setup:", GUILayout.Height(24));
                         using (new EditorGUILayout.HorizontalScope())
                         {
-                            if (GUILayout.Button("Setup Prefab", GUILayout.Height(24)))
+                            if (GUILayout.Button(new GUIContent("Setup Prefab", ""), GUILayout.Height(24)))
                             {
                                 SetupGogoBeyondPrefab(vrcAvatar);
                             }
@@ -561,7 +620,7 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
                     string rootAssetsPath = Path.GetDirectoryName(Application.dataPath);
                     string originalScenePath = SceneManager.GetActiveScene().path;
                     string context = originalScenePath.Substring(0, originalScenePath.LastIndexOf("/"));
-                    string name = context.Substring(context.IndexOf("/") + 1);
+                    string name = context.Substring(context.LastIndexOf("/") + 1);
                     string versionTxtPath = context + "/version.txt";
                     string authorTxtPath = context + "/author.txt";
                     string blenderTxtPath = context + "/blender.txt";
@@ -680,7 +739,7 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
             }
         }
 
-        public void DrawMaterialFoldout()
+        public void DrawAllScenesView()
         {
             using (new EditorGUILayout.VerticalScope())
             {
@@ -689,35 +748,30 @@ namespace Shadster.AvatarTools.ShadsterAvatarToolsWindow
                 subBoxRect.width -= 4;
                 subBoxRect.height += 2;
                 Color currentColor = GUI.color;
-                GUI.color = new Color(0f, 1.5f, 1.5f);
+                GUI.color = new Color(0.1f, 0.1f, 0.1f);
                 GUI.Box(subBoxRect, "");
 
                 GUI.color = currentColor;
-                materialFoldView = EditorGUILayout.Foldout(materialFoldView, "Material");
-                if (materialFoldView)
+                subScenesFoldView = EditorGUILayout.Foldout(subScenesFoldView, "All Scenes");
+                if (subScenesFoldView)
                 {
                     Color currentBackgroundColor = GUI.backgroundColor;
-                    GUI.backgroundColor = new Color(0f, 1.8f, 1.8f);
-                    List<Material> materials = new List<Material>();
-                    materials = GetUniqueMaterials(vrcAvatar).ToList();
+                    GUI.backgroundColor = new Color(0.4f, 0.4f, 0.4f);
+                    string rootAssetsPath = Path.GetDirectoryName(Application.dataPath);
+                    GUIStyle boldCenteredStyle = new GUIStyle(GUI.skin.label);
+                    boldCenteredStyle.alignment = TextAnchor.MiddleCenter;
+                    boldCenteredStyle.fontStyle = FontStyle.Bold;
+                    GUILayout.Label("Context: " + rootAssetsPath, boldCenteredStyle);
 
-                    if (materials.Count > 0)
-                    {
-                        if (GUILayout.Button("Convert Avatar Materials to Quest Toon", GUILayout.Height(24)))
-                        {
-                            ConvertAvatarMaterialsToQuestToon(vrcAvatar);
-                            //GenerateAnimationLightingModes(vrcAvatar);
-                            //GenerateAnimationLightingDirection(vrcAvatar);
-                            //GenerateAnimationShadingCutoff(vrcAvatar);
-                            //GeneratePoiRimLightCutoff(vrcAvatar);
-                            //GeneratePoiMenus(vrcAvatarDescriptor);
-                        }
-                    }
+
                     GUI.backgroundColor = currentBackgroundColor;
-                }       
+                }
+
+                EditorGUILayout.EndVertical();
             }
-            EditorGUILayout.EndVertical();
         }
+
+        
 
         private void Save(string versionTxtPath, string authorTxtPath, string blenderTxtPath)
         {

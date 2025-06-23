@@ -252,6 +252,142 @@ namespace Shadster.AvatarTools
             SaveAnimation(allMax, GetCurrentSceneRootPath() + "/Animations/Generated/ShapeKeys");
         }
 
+        public static void CombineOutfitShapekeys(GameObject vrcAvatar)
+        {
+            // Dictionary to store outfit GameObjects by outfit number
+            Dictionary<string, List<GameObject>> outfitGameObjects = new Dictionary<string, List<GameObject>>();
+
+            // Dictionary to store outfit shapekeys by outfit number
+            Dictionary<string, List<(string path, SkinnedMeshRenderer smr, string shapeName)>> outfitShapekeys =
+                new Dictionary<string, List<(string path, SkinnedMeshRenderer smr, string shapeName)>>();
+
+            // Collect all GameObjects with outfit names
+            foreach (var obj in vrcAvatar.GetComponentsInChildren<Transform>(true))
+            {
+                if (obj.name.StartsWith("Outfit") && obj.name.Length > 6) // "Outfit" + number
+                {
+                    string outfitNumber = obj.name.Substring(6); // Extract number part
+                    if (!outfitGameObjects.ContainsKey(outfitNumber))
+                    {
+                        outfitGameObjects[outfitNumber] = new List<GameObject>();
+                    }
+                    outfitGameObjects[outfitNumber].Add(obj.gameObject);
+                }
+            }
+
+            // Collect all shapekeys with outfit names
+            foreach (var smr in vrcAvatar.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (smr.sharedMesh == null) continue;
+
+                string smrPath = AnimationUtility.CalculateTransformPath(smr.transform, vrcAvatar.transform);
+
+                for (int i = 0; i < smr.sharedMesh.blendShapeCount; i++)
+                {
+                    string shapeName = smr.sharedMesh.GetBlendShapeName(i);
+
+                    // Look for shapekeys like "Outfit1_On", "Outfit2_On", etc.
+                    if (shapeName.StartsWith("Outfit") && shapeName.Contains("_On"))
+                    {
+                        // Extract outfit number (e.g., "1" from "Outfit1_On")
+                        string[] parts = shapeName.Split('_');
+                        if (parts.Length >= 2 && parts[0].StartsWith("Outfit"))
+                        {
+                            string outfitNumber = parts[0].Substring(6); // Extract number part
+                            if (!outfitShapekeys.ContainsKey(outfitNumber))
+                            {
+                                outfitShapekeys[outfitNumber] = new List<(string, SkinnedMeshRenderer, string)>();
+                            }
+                            outfitShapekeys[outfitNumber].Add((smrPath, smr, shapeName));
+                        }
+                    }
+                }
+            }
+
+            // Get all unique outfit numbers from both GameObjects and shapekeys
+            HashSet<string> allOutfitNumbers = new HashSet<string>();
+            foreach (var key in outfitGameObjects.Keys) allOutfitNumbers.Add(key);
+            foreach (var key in outfitShapekeys.Keys) allOutfitNumbers.Add(key);
+
+            if (allOutfitNumbers.Count > 0)
+            {
+                // Create "All Off" animation clip
+                AnimationClip allOffClip = new AnimationClip();
+                allOffClip.name = "Outfit_None";
+
+                // Set all outfit GameObjects to inactive
+                foreach (var outfitEntry in outfitGameObjects)
+                {
+                    foreach (var obj in outfitEntry.Value)
+                    {
+                        string objPath = AnimationUtility.CalculateTransformPath(obj.transform, vrcAvatar.transform);
+                        allOffClip.SetCurve(
+                            objPath,
+                            typeof(GameObject),
+                            "m_IsActive",
+                            new AnimationCurve(new Keyframe(0, 0))
+                        );
+                    }
+                }
+
+                // Set all outfit shapekeys to 0
+                foreach (var shapeEntry in outfitShapekeys)
+                {
+                    foreach (var shapeData in shapeEntry.Value)
+                    {
+                        allOffClip.SetCurve(
+                            shapeData.path,
+                            typeof(SkinnedMeshRenderer),
+                            "blendShape." + shapeData.shapeName,
+                            new AnimationCurve(new Keyframe(0, 0))
+                        );
+                    }
+                }
+
+                SaveAnimation(allOffClip, GetCurrentSceneRootPath() + "/Animations/Generated/Toggles/Outfits");
+
+                // Create individual outfit animation clips
+                foreach (string currentOutfit in allOutfitNumbers)
+                {
+                    AnimationClip outfitClip = new AnimationClip();
+                    outfitClip.name = "Outfit" + currentOutfit;
+
+                    // Handle GameObjects - activate current outfit, deactivate others
+                    foreach (var outfitEntry in outfitGameObjects)
+                    {
+                        foreach (var obj in outfitEntry.Value)
+                        {
+                            string objPath = AnimationUtility.CalculateTransformPath(obj.transform, vrcAvatar.transform);
+                            float activeValue = (outfitEntry.Key == currentOutfit) ? 1 : 0;
+                            outfitClip.SetCurve(
+                                objPath,
+                                typeof(GameObject),
+                                "m_IsActive",
+                                new AnimationCurve(new Keyframe(0, activeValue))
+                            );
+                        }
+                    }
+
+                    // Handle shapekeys - set current outfit to 100, others to 0
+                    foreach (var shapeEntry in outfitShapekeys)
+                    {
+                        foreach (var shapeData in shapeEntry.Value)
+                        {
+                            float shapeValue = (shapeEntry.Key == currentOutfit) ? 100 : 0;
+                            outfitClip.SetCurve(
+                                shapeData.path,
+                                typeof(SkinnedMeshRenderer),
+                                "blendShape." + shapeData.shapeName,
+                                new AnimationCurve(new Keyframe(0, shapeValue))
+                            );
+                        }
+                    }
+
+                    SaveAnimation(outfitClip, GetCurrentSceneRootPath() + "/Animations/Generated/Toggles/Outfits");
+                }
+            }
+        }
+
         public static void CombineEmoteShapekeys(GameObject vrcAvatar)
         {
             // Create data structure to hold all emote blendshapes across all SMRs

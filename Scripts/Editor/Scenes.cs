@@ -55,6 +55,7 @@ namespace Shadster.AvatarTools
                         Common.FixAvatarDescriptor(avatarDescriptor);
                         Common.SetAvatarMeshBounds(avatarDescriptor.gameObject);
                         Common.SetAvatarAnchorProbes(avatarDescriptor.gameObject);
+                        Common.FixMissingSFXPrefab(avatarDescriptor.gameObject);
                     }
                 }
                 if (startPlayModePrefabExists) { Checkboxes.SetStartPlayModeInSceneView(false); }
@@ -89,8 +90,10 @@ namespace Shadster.AvatarTools
             List<string> paths = new List<string>();
             //Export
             var scenePath = SceneManager.GetActiveScene().path;
+            var sceneDirectory = Path.GetDirectoryName(scenePath);
+            var lastFolderName = Path.GetFileName(sceneDirectory);
             paths.Add(scenePath.Substring(0, scenePath.LastIndexOf("/")));
-            var name = paths[0].Substring(paths[0].IndexOf("/") + 1);
+            var name = lastFolderName;
             if (GogoLoco.GogoLocoExist())
             {
                 paths.Add("Assets/GoGo");
